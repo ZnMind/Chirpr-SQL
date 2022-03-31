@@ -1,43 +1,60 @@
 const express = require("express");
 const router = express.Router();
-// const chirpsStore = require("../chirpstore.js");
-// no more chirpstore! install mysql from npm and configure the routes to use that instead of chirpstore.
+const db = require('../db');
 
 // REST API
-router.get("/:id?", (req, res) => {
-    const id = req.params.id;
-
-    if (id) {
-        // const chirp = chirpsStore.GetChirp(id);
-        res.json(chirp);
-    } else {
-        const chirps = chirpsStore.GetChirps();
-        res.json(chirps);
+router.get('/', async (req, res) => {
+    try {
+        res.json(await db.all());
+    } catch (e) {
+        console.log(e);
+        res.sendStatus(500);
     }
+})
+
+router.get('/:id', async (req, res) => {
+    try {
+        res.json((await db.all())[req.params.id - 1]);
+    } catch(e) {
+        console.log(e);
+        res.sendStatus(500);
+    };
 });
 
 // Create
-router.post("/", (req, res) => {
-    const body = req.body;
-
-    // chirpsStore.CreateChirp(body);
-    res.sendStatus(200);
+router.post("/", async (req, res) => {
+    try {
+        console.log(req.body);
+        db.Query(`insert into chirps(userid, content, location) values(${req.body.userid}, '${req.body.content}', '${req.body.location}')`);
+        //res.json(await db.all());
+        res.sendStatus(200);
+    } catch (e) {
+        console.log(e);
+    }
 });
 
 // Delete
-router.delete("/:id", (req, res) => {
-    const id = req.params.id;
-    // chirpsStore.DeleteChirp(id);
-    res.sendStatus(200);
+router.delete("/", (req, res) => {
+    let id = req.body.id;
+    console.log(req.body.id);
+    try {
+        db.Query(`delete from chirps where id = ${req.body.id}`)
+        res.sendStatus(200);
+    } catch (e) {
+        console.log(e);
+    }
 });
 
 // Update
-router.put("/:id", (req, res) => {
+router.put("/", (req, res) => {
     const id = req.params.id;
     const body = req.body;
-
-    // chirpsStore.UpdateChirp(id, body);
-    res.sendStatus(200);
+    try {
+        db.Query(`update chirps set content = '${req.body.content}' where id = ${req.body.id}`)
+        res.sendStatus(200);
+    } catch (e) {
+        console.log(e);
+    }
 });
 
 module.exports = router;
